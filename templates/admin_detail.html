@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from '_macros.html' import status_badge %}
+{% block title %}{{ req['reference_number'] }} | Waste Collection Request System{% endblock %}
+
+{% block content %}
+{% set current_url = request.full_path.rstrip('?') %}
+<section class="page-header">
+  <div class="container">
+    <a href="{{ next_url }}" class="back-link"><i class="bi bi-arrow-left me-1"></i>Back to list</a>
+    <h1 class="mt-2">Request {{ req['reference_number'] }}
+      {% if req['is_demo'] %}<span class="demo-tag align-middle" title="Synthetic demonstration record">Demo</span>{% endif %}
+    </h1>
+  </div>
+</section>
+
+<section class="section pt-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="form-card">
+          <h2 class="h5 mb-3">Request details</h2>
+          <dl class="detail-list">
+            <div><dt>Reference number</dt><dd>{{ req['reference_number'] }}</dd></div>
+            <div><dt>Requester name</dt><dd>{{ req['full_name'] }}</dd></div>
+            <div><dt>Area / location</dt><dd>{{ req['area'] }}</dd></div>
+            <div><dt>Waste type</dt><dd>{{ req['waste_type'] }}</dd></div>
+            <div><dt>Preferred collection date</dt><dd>{{ req['collection_date']|pretty_date('%A, %d %B %Y') }}</dd></div>
+            <div><dt>Current status</dt><dd>{{ status_badge(req['status']) }}</dd></div>
+            <div><dt>Date submitted</dt><dd>{{ req['created_at']|localtime }}</dd></div>
+            <div><dt>Last updated</dt><dd>{{ req['updated_at']|localtime }}</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="form-card mb-3">
+          <h2 class="h5 mb-3">Update status</h2>
+          <form method="post" action="{{ url_for('admin_update_status', request_id=req['id']) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ current_url }}">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select mb-3" id="status" name="status">
+              {% for s in STATUSES %}
+              <option value="{{ s }}" {% if s == req['status'] %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check2 me-1"></i>Save status</button>
+          </form>
+        </div>
+
+        <div class="side-card mb-3">
+          <h2 class="h6">Same area</h2>
+          <p class="mb-2 small text-muted">
+            {{ same_area_open }} other open request{{ '' if same_area_open == 1 else 's' }} in {{ req['area'] }}.
+          </p>
+          <a class="btn btn-sm btn-outline-success" href="{{ url_for('admin_routes', area=req['area'], status='open') }}">
+            <i class="bi bi-diagram-3 me-1"></i>View area group
+          </a>
+        </div>
+
+        <div class="danger-zone">
+          <h2 class="h6">Delete request</h2>
+          <p class="small text-muted">Remove duplicate or inappropriate requests. This cannot be undone.</p>
+          <button type="button" class="btn btn-outline-danger btn-sm"
+                  data-delete-url="{{ url_for('admin_delete_request', request_id=req['id']) }}"
+                  data-delete-reference="{{ req['reference_number'] }}"
+                  data-delete-next="{{ next_url }}">
+            <i class="bi bi-trash3 me-1"></i>Delete this request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% include '_delete_modal.html' %}
+{% endblock %}

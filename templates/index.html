@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Waste Collection Request System{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <div class="row align-items-center gy-4">
+      <div class="col-lg-7">
+        <p class="eyebrow">Household and campus waste collection</p>
+        <h1 class="hero-title">Request a waste collection in under a minute.</h1>
+        <p class="hero-lead">
+          Tell us who you are, where the waste is, what type it is and when you would like it
+          collected. Requests are recorded centrally so the collection team can organise pickups
+          by area and date.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{{ url_for('request_form') }}" class="btn btn-accent btn-lg">
+            <i class="bi bi-plus-circle me-2"></i>Request Collection
+          </a>
+          <a href="#how-it-works" class="btn btn-outline-light btn-lg">How it works</a>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="hero-panel" aria-label="What you provide">
+          <div class="hero-panel-title">A request needs four details</div>
+          <ul class="hero-checklist">
+            <li><i class="bi bi-person"></i><span>Your full name</span></li>
+            <li><i class="bi bi-geo-alt"></i><span>Your area or location</span></li>
+            <li><i class="bi bi-calendar-event"></i><span>Preferred collection date</span></li>
+            <li><i class="bi bi-trash3"></i><span>Type of waste</span></li>
+          </ul>
+          <div class="hero-panel-note">You receive a unique reference number when the request is saved.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="section-head">
+      <h2>How it works</h2>
+      <p>Three steps from request to collection.</p>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Submit a request</h3>
+          <p>Complete the request form with your name, area, preferred date and waste type.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>Request is organised</h3>
+          <p>Administrators review new requests and group them by area and collection date.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>Collection is recorded</h3>
+          <p>Each request moves from <strong>Pending</strong> to <strong>Scheduled</strong> and finally <strong>Collected</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="categories">
+  <div class="container">
+    <div class="section-head">
+      <h2>Supported waste categories</h2>
+      <p>Choose the category that best matches what you need collected.</p>
+    </div>
+    <div class="row g-3">
+      {% set category_info = [
+        ('Household Waste', 'bi-house-door', 'Everyday waste from homes and rooms.'),
+        ('Plastic Waste', 'bi-cup-straw', 'Bottles, sachets, packaging and containers.'),
+        ('Organic Waste', 'bi-flower2', 'Food scraps, leaves and garden waste.'),
+        ('Paper Waste', 'bi-file-earmark-text', 'Paper, cardboard and printed material.'),
+        ('General Waste', 'bi-trash3', 'Mixed waste that fits no other category.'),
+        ('Other', 'bi-three-dots', 'Anything else. Mention it to the collection team.'),
+      ] %}
+      {% for name, icon, text in category_info %}
+      <div class="col-sm-6 col-lg-4">
+        <div class="category-card">
+          <div class="category-icon"><i class="bi {{ icon }}"></i></div>
+          <div>
+            <h3>{{ name }}</h3>
+            <p>{{ text }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="service-info">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="section-head">
+          <h2>Service information</h2>
+        </div>
+        <ul class="info-list">
+          <li><i class="bi bi-calendar-check"></i>
+            <span>The date you choose is a <strong>preferred</strong> date. Past dates are not accepted.</span></li>
+          <li><i class="bi bi-hash"></i>
+            <span>Keep your reference number. It identifies your request when you contact the collection team.</span></li>
+          <li><i class="bi bi-geo"></i>
+            <span>Requests from the same area are grouped together so collections can be planned efficiently.</span></li>
+        </ul>
+      </div>
+      <div class="col-lg-6">
+        <div class="notice-card">
+          <h3><i class="bi bi-info-circle me-2"></i>About this system</h3>
+          <p class="mb-2">
+            This is an academic prototype developed by Group 26 for NS-CSC 229 Integrated Design
+            Project II at Nasarawa State University, Keffi.
+          </p>
+          <p class="mb-0">
+            Records shown during demonstrations are synthetic and do not represent real residents
+            or real collections.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

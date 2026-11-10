@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Request Collection | Waste Collection Request System{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <h1>Request a waste collection</h1>
+    <p>All four fields are required.</p>
+  </div>
+</section>
+
+<section class="section pt-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <form method="post" action="{{ url_for('request_form') }}" class="form-card" id="requestForm" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          {% if errors %}
+          <div class="alert alert-danger d-flex" role="alert">
+            <i class="bi bi-exclamation-octagon-fill me-2 mt-1"></i>
+            <div>Please correct the highlighted fields and submit again.</div>
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="full_name" class="form-label">Full name</label>
+            <input type="text" class="form-control {% if errors.full_name %}is-invalid{% endif %}"
+                   id="full_name" name="full_name" maxlength="100" autocomplete="name"
+                   value="{{ values.full_name or '' }}" required>
+            <div class="invalid-feedback">{{ errors.full_name or 'Please enter your full name.' }}</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="area" class="form-label">Area / location</label>
+            <input type="text" class="form-control {% if errors.area %}is-invalid{% endif %}"
+                   id="area" name="area" maxlength="80" list="areaOptions" autocomplete="off"
+                   placeholder="Select a suggestion or type your area"
+                   value="{{ values.area or '' }}" required>
+            <datalist id="areaOptions">
+              {% for area_name in areas %}<option value="{{ area_name }}">{% endfor %}
+            </datalist>
+            <div class="form-text">Be specific, for example a hostel, block or street name.</div>
+            <div class="invalid-feedback">{{ errors.area or 'Please enter your area or location.' }}</div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="collection_date" class="form-label">Preferred collection date</label>
+              <input type="date" class="form-control {% if errors.collection_date %}is-invalid{% endif %}"
+                     id="collection_date" name="collection_date"
+                     min="{{ min_date }}" max="{{ max_date }}"
+                     value="{{ values.collection_date or '' }}" required>
+              <div class="invalid-feedback">{{ errors.collection_date or 'Choose today or a future date.' }}</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="waste_type" class="form-label">Waste type</label>
+              <select class="form-select {% if errors.waste_type %}is-invalid{% endif %}"
+                      id="waste_type" name="waste_type" required>
+                <option value="" disabled {% if not values.waste_type %}selected{% endif %}>Select waste type</option>
+                {% for type_name in WASTE_TYPES %}
+                <option value="{{ type_name }}" {% if values.waste_type == type_name %}selected{% endif %}>{{ type_name }}</option>
+                {% endfor %}
+              </select>
+              <div class="invalid-feedback">{{ errors.waste_type or 'Please select a waste type.' }}</div>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 pt-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="bi bi-send me-2"></i>Submit request
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-light border btn-lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+
+      <div class="col-lg-4">
+        <aside class="side-card">
+          <h2>Before you submit</h2>
+          <ul class="info-list compact">
+            <li><i class="bi bi-calendar-event"></i><span>Choose today or a later date.</span></li>
+            <li><i class="bi bi-geo-alt"></i><span>Use the same area name your neighbours use so requests are grouped.</span></li>
+            <li><i class="bi bi-hash"></i><span>A reference number is shown after submission. Note it down.</span></li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

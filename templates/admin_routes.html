@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% from '_macros.html' import status_badge, status_form %}
+{% block title %}Area View | Waste Collection Request System{% endblock %}
+
+{% block content %}
+{% set current_url = request.full_path.rstrip('?') %}
+<section class="page-header no-print">
+  <div class="container d-flex flex-wrap justify-content-between align-items-end gap-2">
+    <div>
+      <h1>Area-based collection view</h1>
+      <p>Requests grouped by area, ordered by collection date.</p>
+    </div>
+    <button type="button" class="btn btn-outline-light" data-print>
+      <i class="bi bi-printer me-2"></i>Print list
+    </button>
+  </div>
+</section>
+
+<section class="section pt-4">
+  <div class="container">
+
+    <form method="get" action="{{ url_for('admin_routes') }}" class="filter-card mb-4 no-print">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-lg-3">
+          <label for="q" class="form-label">Search</label>
+          <input type="search" class="form-control" id="q" name="q" value="{{ filters.q }}"
+                 placeholder="Reference, name or type">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label for="area" class="form-label">Area</label>
+          <select class="form-select" id="area" name="area">
+            <option value="">All areas</option>
+            {% for a in areas %}
+            <option value="{{ a }}" {% if filters.area|lower == a|lower %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <label for="status" class="form-label">Status</label>
+          <select class="form-select" id="status" name="status">
+            <option value="open" {% if filters.status == 'open' %}selected{% endif %}>Open requests</option>
+            <option value="" {% if filters.status == '' %}selected{% endif %}>All statuses</option>
+            {% for s in STATUSES %}
+            <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <label for="date_from" class="form-label">Date from</label>
+          <input type="date" class="form-control" id="date_from" name="date_from" value="{{ filters.date_from }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label for="date_to" class="form-label">Date to</label>
+          <input type="date" class="form-control" id="date_to" name="date_to" value="{{ filters.date_to }}">
+        </div>
+        <div class="col-12 col-lg-1 d-grid">
+          <button type="submit" class="btn btn-primary" aria-label="Apply filters"><i class="bi bi-funnel"></i></button>
+        </div>
+      </div>
+      <div class="mt-3">
+        <a href="{{ url_for('admin_routes') }}" class="btn btn-sm btn-light border">
+          <i class="bi bi-x-circle me-1"></i>Reset to open requests
+        </a>
+      </div>
+    </form>
+
+    <p class="text-muted small mb-3">
+      {{ total }} request{{ '' if total == 1 else 's' }} in {{ groups|length }} area{{ '' if groups|length == 1 else 's' }}.
+    </p>
+
+    {% for g in groups %}
+    <div class="table-card area-group mb-4">
+      <div class="table-card-head area-head">
+        <div>
+          <h2 class="h5 mb-1"><i class="bi bi-geo-alt-fill me-2"></i>{{ g.area }}</h2>
+          <div class="small text-muted">
+            {{ g.count }} request{{ '' if g.count == 1 else 's' }} &middot; earliest collection {{ g.earliest|pretty_date }}
+          </div>
+        </div>
+        <div class="area-chips">
+          <span class="status-badge status-pending">{{ g.pending }} Pending</span>
+          <span class="status-badge status-scheduled">{{ g.scheduled }} Scheduled</span>
+          <span class="status-badge status-collected">{{ g.collected }} Collected</span>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table data-table align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Collection date</th>
+              <th scope="col">Reference</th>
+              <th scope="col">Requester</th>
+              <th scope="col">Waste type</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="text-end no-print">Update</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in g['items'] %}
+            <tr>
+              <td data-label="Collection date" class="fw-semibold">{{ r['collection_date']|pretty_date('%a, %d %b %Y') }}</td>
+              <td data-label="Reference">
+                <a class="ref-link" href="{{ url_for('admin_request_detail', request_id=r['id'], next=current_url) }}">{{ r['reference_number'] }}</a>
+                {% if r['is_demo'] %}<span class="demo-tag" title="Synthetic demonstration record">Demo</span>{% endif %}
+              </td>
+              <td data-label="Requester">{{ r['full_name'] }}</td>
+              <td data-label="Waste type">{{ r['waste_type'] }}</td>
+              <td data-label="Status">{{ status_badge(r['status']) }}</td>
+              <td data-label="Update" class="text-end no-print">
+                <div class="row-actions">{{ status_form(r, current_url) }}</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="table-card">
+      <div class="empty-state">
+        <i class="bi bi-diagram-3"></i>
+        <p class="mb-1 fw-semibold">No requests match these filters</p>
+        <p class="text-muted mb-0">Choose "All statuses" to include collected requests, or widen the date range.</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

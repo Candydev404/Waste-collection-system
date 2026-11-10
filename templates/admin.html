@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% from '_macros.html' import status_badge, status_form %}
+{% block title %}Dashboard | Waste Collection Request System{% endblock %}
+
+{% block content %}
+{% set current_url = request.full_path.rstrip('?') %}
+<section class="page-header">
+  <div class="container d-flex flex-wrap justify-content-between align-items-end gap-2">
+    <div>
+      <h1>Administrator dashboard</h1>
+      <p>Manage collection requests and monitor progress.</p>
+    </div>
+    <a href="{{ url_for('admin_routes') }}" class="btn btn-accent">
+      <i class="bi bi-diagram-3 me-2"></i>Area view
+    </a>
+  </div>
+</section>
+
+<section class="section pt-4">
+  <div class="container">
+
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card stat-total">
+          <div class="stat-icon"><i class="bi bi-inboxes"></i></div>
+          <div class="stat-value">{{ stats['total'] }}</div>
+          <div class="stat-label">Total requests</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card stat-pending">
+          <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+          <div class="stat-value">{{ stats['pending'] }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card stat-scheduled">
+          <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
+          <div class="stat-value">{{ stats['scheduled'] }}</div>
+          <div class="stat-label">Scheduled</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card stat-collected">
+          <div class="stat-icon"><i class="bi bi-check2-circle"></i></div>
+          <div class="stat-value">{{ stats['collected'] }}</div>
+          <div class="stat-label">Collected</div>
+        </div>
+      </div>
+    </div>
+
+    <form method="get" action="{{ url_for('admin_dashboard') }}" class="filter-card mb-3" id="filterForm">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-lg-3">
+          <label for="q" class="form-label">Search</label>
+          <input type="search" class="form-control" id="q" name="q" value="{{ filters.q }}"
+                 placeholder="Reference, name, area or type">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label for="area" class="form-label">Area</label>
+          <select class="form-select" id="area" name="area">
+            <option value="">All areas</option>
+            {% for a in areas %}
+            <option value="{{ a }}" {% if filters.area|lower == a|lower %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <label for="status" class="form-label">Status</label>
+          <select class="form-select" id="status" name="status">
+            <option value="">All statuses</option>
+            {% for s in STATUSES %}
+            <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <label for="date_from" class="form-label">Date from</label>
+          <input type="date" class="form-control" id="date_from" name="date_from" value="{{ filters.date_from }}">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label for="date_to" class="form-label">Date to</label>
+          <input type="date" class="form-control" id="date_to" name="date_to" value="{{ filters.date_to }}">
+        </div>
+        <div class="col-12 col-lg-1 d-grid">
+          <button type="submit" class="btn btn-primary" aria-label="Apply filters"><i class="bi bi-funnel"></i></button>
+        </div>
+      </div>
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="sort" class="form-label mb-0 small text-muted">Sort by</label>
+          <select class="form-select form-select-sm w-auto" id="sort" name="sort" data-autosubmit>
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest submitted</option>
+            <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>Collection date (soonest)</option>
+            <option value="date_desc" {% if sort == 'date_desc' %}selected{% endif %}>Collection date (latest)</option>
+          </select>
+        </div>
+        {% if filters.q or filters.area or filters.status or filters.date_from or filters.date_to %}
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm btn-light border">
+          <i class="bi bi-x-circle me-1"></i>Clear filters
+        </a>
+        {% endif %}
+      </div>
+    </form>
+
+    <div class="table-card">
+      <div class="table-card-head">
+        <h2 class="h6 mb-0">Collection requests</h2>
+        <span class="text-muted small">{{ matched }} result{{ '' if matched == 1 else 's' }}</span>
+      </div>
+
+      {% if rows %}
+      <div class="table-responsive">
+        <table class="table data-table align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Reference</th>
+              <th scope="col">Requester</th>
+              <th scope="col">Area</th>
+              <th scope="col">Waste type</th>
+              <th scope="col">Collection date</th>
+              <th scope="col">Submitted</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+            <tr>
+              <td data-label="Reference">
+                <a class="ref-link" href="{{ url_for('admin_request_detail', request_id=r['id'], next=current_url) }}">{{ r['reference_number'] }}</a>
+                {% if r['is_demo'] %}<span class="demo-tag" title="Synthetic demonstration record">Demo</span>{% endif %}
+              </td>
+              <td data-label="Requester">{{ r['full_name'] }}</td>
+              <td data-label="Area">{{ r['area'] }}</td>
+              <td data-label="Waste type">{{ r['waste_type'] }}</td>
+              <td data-label="Collection date">{{ r['collection_date']|pretty_date }}</td>
+              <td data-label="Submitted"><span title="{{ r['created_at']|localtime }}">{{ r['created_at']|localtime('%d %b %Y') }}</span></td>
+              <td data-label="Status">{{ status_badge(r['status']) }}</td>
+              <td data-label="Actions" class="text-end">
+                <div class="row-actions">
+                  {{ status_form(r, current_url) }}
+                  <a class="btn btn-sm btn-outline-secondary"
+                     href="{{ url_for('admin_request_detail', request_id=r['id'], next=current_url) }}"
+                     title="View details" aria-label="View details for {{ r['reference_number'] }}">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <button type="button" class="btn btn-sm btn-outline-danger"
+                          data-delete-url="{{ url_for('admin_delete_request', request_id=r['id']) }}"
+                          data-delete-reference="{{ r['reference_number'] }}"
+                          data-delete-next="{{ current_url }}"
+                          title="Delete request" aria-label="Delete {{ r['reference_number'] }}">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if pages > 1 %}
+      <nav class="table-card-foot" aria-label="Request pages">
+        <span class="text-muted small">Page {{ page }} of {{ pages }}</span>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('admin_dashboard', page=page - 1, **keep) }}">Previous</a>
+          </li>
+          {% for n in range(1, pages + 1) %}
+          <li class="page-item {% if n == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('admin_dashboard', page=n, **keep) }}">{{ n }}</a>
+          </li>
+          {% endfor %}
+          <li class="page-item {% if page >= pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('admin_dashboard', page=page + 1, **keep) }}">Next</a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p class="mb-1 fw-semibold">No requests found</p>
+        <p class="text-muted mb-0">
+          {% if filters.q or filters.area or filters.status or filters.date_from or filters.date_to %}
+          Try changing or clearing the filters.
+          {% else %}
+          New requests will appear here once residents submit them.
+          {% endif %}
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% include '_delete_modal.html' %}
+{% endblock %}

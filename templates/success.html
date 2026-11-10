@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from '_macros.html' import status_badge %}
+{% block title %}Request Submitted | Waste Collection Request System{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <div class="form-card success-card">
+          <div class="success-head">
+            <div class="success-icon"><i class="bi bi-check2-circle"></i></div>
+            <div>
+              <h1 class="h3 mb-1">Request submitted successfully</h1>
+              <p class="text-muted mb-0">Your request has been saved. Keep your reference number.</p>
+            </div>
+          </div>
+
+          <div class="reference-box">
+            <div class="reference-label">Reference number</div>
+            <div class="reference-value" id="referenceValue">{{ req['reference_number'] }}</div>
+            <button type="button" class="btn btn-sm btn-outline-success" id="copyReference"
+                    data-copy-target="referenceValue">
+              <i class="bi bi-clipboard me-1"></i><span>Copy</span>
+            </button>
+          </div>
+
+          <dl class="detail-list">
+            <div><dt>Area / location</dt><dd>{{ req['area'] }}</dd></div>
+            <div><dt>Preferred collection date</dt><dd>{{ req['collection_date']|pretty_date('%A, %d %B %Y') }}</dd></div>
+            <div><dt>Waste type</dt><dd>{{ req['waste_type'] }}</dd></div>
+            <div><dt>Current status</dt><dd>{{ status_badge(req['status']) }}</dd></div>
+            <div><dt>Submitted</dt><dd>{{ req['created_at']|localtime }}</dd></div>
+          </dl>
+
+          <div class="d-flex flex-wrap gap-2 mt-4 no-print">
+            <a href="{{ url_for('request_form') }}" class="btn btn-primary">
+              <i class="bi bi-plus-circle me-1"></i>Submit another request
+            </a>
+            <button type="button" class="btn btn-light border" data-print>
+              <i class="bi bi-printer me-1"></i>Print
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-light border">Back to home</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

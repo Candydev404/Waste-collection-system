@@ -1,0 +1,24 @@
+{# Shared template helpers #}
+
+{% macro status_badge(status) -%}
+<span class="status-badge status-{{ status|status_class }}">
+  <i class="bi {% if status == 'Pending' %}bi-hourglass-split{% elif status == 'Scheduled' %}bi-calendar-check{% else %}bi-check2-circle{% endif %}"></i>{{ status }}
+</span>
+{%- endmacro %}
+
+{# Compact status editor used in table rows. `next_url` returns the admin to the same filtered list. #}
+{% macro status_form(row, next_url) -%}
+<form method="post" action="{{ url_for('admin_update_status', request_id=row['id']) }}" class="status-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="next" value="{{ next_url }}">
+  <label class="visually-hidden" for="status-{{ row['id'] }}">Status for {{ row['reference_number'] }}</label>
+  <select class="form-select form-select-sm" id="status-{{ row['id'] }}" name="status">
+    {% for s in ['Pending', 'Scheduled', 'Collected'] %}
+    <option value="{{ s }}" {% if s == row['status'] %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-sm btn-outline-success" title="Save status" aria-label="Save status for {{ row['reference_number'] }}">
+    <i class="bi bi-check-lg"></i>
+  </button>
+</form>
+{%- endmacro %}
